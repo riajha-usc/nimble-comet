@@ -55,11 +55,32 @@ describe("TaskService", () => {
     expect(tasks.every((task) => task.isOverdue)).toBe(true);
   });
 
+  it("narrows a manager's overdue list to a single rep", async () => {
+    const tasks = await service.listOverdueTasks(await contextFor("u-dana"), { repId: "u-alicia" });
+
+    expect(tasks.map((task) => task.id)).toEqual(["task-1004"]);
+  });
+
+  it("forbids overdue lists for reps the user cannot see", async () => {
+    await expect(service.listOverdueTasks(await contextFor("u-dana"), { repId: "u-sam" })).rejects.toMatchObject({ code: "forbidden" });
+    await expect(service.listOverdueTasks(await contextFor("u-marcus"), { repId: "u-alicia" })).rejects.toMatchObject({ code: "forbidden" });
+  });
+
   it("completes a task and records the completion time", async () => {
     const task = await service.completeTask(await contextFor("u-dana"), "task-1006");
 
     expect(task.status).toBe("completed");
     expect(task.completedAt).toBe(referenceTime.toISOString());
     expect(task.isOverdue).toBe(false);
+  });
+
+  it("reports a teammate's task as not found when a rep tries to complete it", async () => {
+    const marcus = await contextFor("u-marcus");
+
+    await expect(service.completeTask(marcus, "task-1004")).rejects.toMatchObject({ code: "not_found" });
+    expect((await service.listTasks(await contextFor("u-dana"), { repId: "u-alicia" })).find((task) => task.id === "task-1004")?.status).toBe("open");
+
+    await service.completeTask(await contextFor("u-dana"), "task-1004");
+    await expect(service.completeTask(marcus, "task-1004")).rejects.toMatchObject({ code: "not_found" });
   });
 });
