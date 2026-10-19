@@ -75,4 +75,26 @@ describe("TaskList", () => {
     expect(await screen.findByText("Confirm install date")).toBeTruthy();
     expect(screen.queryByRole("alert")).toBeNull();
   });
+
+  it("calls onCompleted only after a task is completed successfully", async () => {
+    let completeStatus = 409;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (path: string) =>
+        path.endsWith("/complete")
+          ? new Response(JSON.stringify({ error: { code: "conflict", message: "Already completed" } }), { status: completeStatus })
+          : new Response(JSON.stringify({ tasks: [task] }), { status: 200 }),
+      ),
+    );
+    const onCompleted = vi.fn();
+
+    render(<TaskList view="all" onCompleted={onCompleted} />);
+    await userEvent.click(await screen.findByRole("button", { name: "Mark complete" }));
+    await screen.findByRole("alert");
+    expect(onCompleted).not.toHaveBeenCalled();
+
+    completeStatus = 200;
+    await userEvent.click(screen.getByRole("button", { name: "Mark complete" }));
+    await vi.waitFor(() => expect(onCompleted).toHaveBeenCalledTimes(1));
+  });
 });

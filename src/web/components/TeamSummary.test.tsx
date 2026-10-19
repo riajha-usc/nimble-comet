@@ -29,21 +29,22 @@ describe("TeamSummary", () => {
 
     render(<TeamSummary refreshKey={0} />);
 
-    const rows = (await screen.findByLabelText("Team summary")).children;
+    const rows = (await screen.findByRole("group", { name: "Team summary" })).children;
     expect([...rows].map((row) => row.textContent)).toEqual(["Jordan Pike 2 overdue 3 open", "Alicia Chen 0 overdue 1 open"]);
     expect(fetchMock).toHaveBeenCalledWith("/api/team/summary", expect.anything());
   });
 
-  it("fetches again when the refresh key changes", async () => {
+  it("keeps the previous counts on screen while it fetches again after the refresh key changes", async () => {
     const fetchMock = mockFetch({ reps });
 
     const { rerender } = render(<TeamSummary refreshKey={0} />);
-    await screen.findByLabelText("Team summary");
-    fetchMock.mockResolvedValue(
-      new Response(JSON.stringify({ reps: [{ ...reps[0]!, overdueCount: 1 }] }), { status: 200, headers: { "Content-Type": "application/json" } }),
-    );
+    await screen.findByRole("group", { name: "Team summary" });
+    let respond: (response: Response) => void = () => {};
+    fetchMock.mockReturnValue(new Promise<Response>((resolve) => (respond = resolve)));
     rerender(<TeamSummary refreshKey={1} />);
 
+    expect(screen.getByText("2 overdue")).toBeTruthy();
+    respond(new Response(JSON.stringify({ reps: [{ ...reps[0]!, overdueCount: 1 }] }), { status: 200, headers: { "Content-Type": "application/json" } }));
     expect(await screen.findByText("1 overdue")).toBeTruthy();
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
@@ -54,6 +55,6 @@ describe("TeamSummary", () => {
     render(<TeamSummary refreshKey={0} />);
 
     expect(await screen.findByText(/Could not load the team summary/)).toBeTruthy();
-    expect(screen.queryByLabelText("Team summary")).toBeNull();
+    expect(screen.queryByRole("group", { name: "Team summary" })).toBeNull();
   });
 });
