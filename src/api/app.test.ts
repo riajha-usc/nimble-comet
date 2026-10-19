@@ -71,4 +71,9 @@ describe("HTTP API", () => {
     expect(res.status).toBe(200);
     expect(res.body.tasks.map((task: { id: string }) => task.id)).toEqual(["task-1004"]);
   });
+
+  it("returns 400 for a malformed JSON body", async () => {
+    const res = await api().post("/api/tasks/task-1006/complete").set(dana).type("json").send("{bad");
+    expect([res.status, res.body.error.code]).toEqual([400, "invalid_request"]);
+  });
 });

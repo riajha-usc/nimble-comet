@@ -30,6 +30,9 @@ export const errorHandler: ErrorRequestHandler = (error, _req, res, _next) => {
   } else if (error instanceof DomainError) {
     status = statusByDomainCode[error.code] ?? 400;
     body = { error: { code: error.code, message: error.message } };
+  } else if (error?.type === "entity.parse.failed") {
+    status = 400;
+    body = { error: { code: "invalid_request", message: "Request body is not valid JSON" } };
   } else {
     console.error(error);
   }
