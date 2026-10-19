@@ -41,6 +41,19 @@ export interface TeamRepsResponse {
   reps: RepSummary[];
 }
 
+export interface TeamRepSummary {
+  id: string;
+  name: string;
+  teamId: string;
+  overdueCount: number;
+  /** All open tasks, including overdue ones. */
+  openCount: number;
+}
+
+export interface TeamSummaryResponse {
+  reps: TeamRepSummary[];
+}
+
 export interface TaskView {
   id: string;
   title: string;

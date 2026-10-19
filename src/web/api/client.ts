@@ -6,6 +6,7 @@ import type {
   TaskResponse,
   TaskStatus,
   TeamRepsResponse,
+  TeamSummaryResponse,
 } from "../../shared/types";
 
 export class ApiError extends Error {
@@ -60,6 +61,7 @@ export const api = {
   demoAccounts: () => request<DemoAccountsResponse>("/api/demo-accounts"),
   currentUser: () => request<CurrentUserResponse>("/api/me"),
   teamReps: () => request<TeamRepsResponse>("/api/team/reps"),
+  teamSummary: () => request<TeamSummaryResponse>("/api/team/summary"),
   listTasks: (params: TaskListParams = {}) => request<TaskListResponse>(withQuery("/api/tasks", { ...params })),
   listOverdueTasks: (params: Pick<TaskListParams, "repId"> = {}) =>
     request<TaskListResponse>(withQuery("/api/tasks/overdue", { ...params })),

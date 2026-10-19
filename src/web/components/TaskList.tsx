@@ -11,6 +11,7 @@ interface TaskListProps {
   view: TaskListView;
   repId?: string;
   status?: TaskStatus;
+  onCompleted?: () => void;
 }
 
 const emptyMessages: Record<TaskListView, string> = {
@@ -18,7 +19,7 @@ const emptyMessages: Record<TaskListView, string> = {
   overdue: "No overdue tasks. Everyone is caught up.",
 };
 
-export function TaskList({ view, repId, status }: TaskListProps) {
+export function TaskList({ view, repId, status, onCompleted }: TaskListProps) {
   const tasks = useAsync(
     async () => {
       const response = view === "overdue" ? await api.listOverdueTasks({ repId }) : await api.listTasks({ repId, status });
@@ -35,6 +36,7 @@ export function TaskList({ view, repId, status }: TaskListProps) {
     try {
       await api.completeTask(task.id);
       tasks.reload();
+      onCompleted?.();
     } catch (error) {
       setActionError(`Could not complete "${task.title}": ${error instanceof Error ? error.message : String(error)}`);
     } finally {

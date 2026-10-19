@@ -95,6 +95,16 @@ name. Reps receive `403`.
 { "reps": [{ "id": "u-alicia", "name": "Alicia Chen", "teamId": "team-north" }] }
 ```
 
+### `GET /api/team/summary`
+
+Managers only. For each rep on the teams the signed-in manager leads, counts
+their overdue tasks and their open tasks (open includes overdue). Sorted by
+overdue count, highest first, then by name. Reps receive `403`.
+
+```json
+{ "reps": [{ "id": "u-alicia", "name": "Alicia Chen", "teamId": "team-north", "overdueCount": 1, "openCount": 2 }] }
+```
+
 ### `GET /api/tasks`
 
 Lists tasks visible to the signed-in user, ordered by due time (earliest first).

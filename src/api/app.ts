@@ -49,7 +49,7 @@ export function createApp({ clock = systemClock, data = createFixtureData(clock.
 
   const authenticated = express.Router();
   authenticated.use(authenticate(sessionRepository, directoryRepository));
-  authenticated.use(directoryRoutes(directoryService));
+  authenticated.use(directoryRoutes(directoryService, taskService));
   authenticated.use("/tasks", taskRoutes(taskService));
   app.use("/api", authenticated);
 

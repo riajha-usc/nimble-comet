@@ -72,6 +72,15 @@ describe("HTTP API", () => {
     expect(res.body.tasks.map((task: { id: string }) => task.id)).toEqual(["task-1004"]);
   });
 
+  it("serves /team/summary to managers and returns 403 to reps", async () => {
+    const manager = await api().get("/api/team/summary").set(dana);
+    const rep = await api().get("/api/team/summary").set(marcus);
+
+    expect(manager.status).toBe(200);
+    expect(manager.body.reps.map((row: { id: string }) => row.id)).toEqual(["u-alicia", "u-jordan", "u-marcus"]);
+    expect([rep.status, rep.body.error.code]).toEqual([403, "forbidden"]);
+  });
+
   it("returns 400 for a malformed JSON body", async () => {
     const res = await api().post("/api/tasks/task-1006/complete").set(dana).type("json").send("{bad");
     expect([res.status, res.body.error.code]).toEqual([400, "invalid_request"]);

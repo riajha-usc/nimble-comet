@@ -5,6 +5,7 @@ import { api, setSessionToken } from "./api/client";
 import { AccountSwitcher } from "./components/AccountSwitcher";
 import { RepFilter } from "./components/RepFilter";
 import { TaskList, type TaskListView } from "./components/TaskList";
+import { TeamSummary } from "./components/TeamSummary";
 import { useAsync } from "./hooks/useAsync";
 import { loadSavedToken, saveToken } from "./session";
 
@@ -66,6 +67,7 @@ function Workspace() {
   const [view, setView] = useState<TaskListView>("all");
   const [repId, setRepId] = useState("");
   const [status, setStatus] = useState<TaskStatus | "">("open");
+  const [completions, setCompletions] = useState(0);
 
   if (me.status === "loading") {
     return (
@@ -120,7 +122,13 @@ function Workspace() {
         )}
       </div>
 
-      <TaskList view={view} repId={repId || undefined} status={status || undefined} />
+      {isManager && view === "overdue" && <TeamSummary refreshKey={completions} />}
+      <TaskList
+        view={view}
+        repId={repId || undefined}
+        status={status || undefined}
+        onCompleted={() => setCompletions((count) => count + 1)}
+      />
     </section>
   );
 }

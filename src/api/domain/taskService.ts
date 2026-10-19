@@ -1,8 +1,8 @@
-import type { TaskView } from "../../shared/types";
+import type { TaskView, TeamRepSummary } from "../../shared/types";
 import type { RequestContext } from "../auth/requestContext";
 import type { DirectoryRepository, Task, TaskRepository } from "../repository/types";
 import type { Clock } from "./clock";
-import { ConflictError, NotFoundError } from "./errors";
+import { ConflictError, ForbiddenError, NotFoundError } from "./errors";
 import type { TaskQueryEngine, TaskQueryFilters } from "./taskQueries";
 import { isOverdue } from "./tasks";
 
@@ -22,6 +22,28 @@ export class TaskService {
 
   async listOverdueTasks(context: RequestContext, filters: Pick<TaskFilters, "repId"> = {}): Promise<TaskView[]> {
     return this.toViews(await this.queries.run("overdue", context, filters));
+  }
+
+  async teamSummary(context: RequestContext): Promise<TeamRepSummary[]> {
+    if (context.scope.kind !== "teams") {
+      throw new ForbiddenError("Only managers can view the team summary");
+    }
+    const now = this.clock.now();
+    const reps = await this.directory.findRepsByTeamIds(context.scope.teamIds);
+    const openTasks = await this.tasks.findTasks({ teamIds: context.scope.teamIds, status: "open" });
+
+    return reps
+      .map((rep) => {
+        const repTasks = openTasks.filter((task) => task.assigneeId === rep.id);
+        return {
+          id: rep.id,
+          name: rep.name,
+          teamId: rep.teamId!,
+          overdueCount: repTasks.filter((task) => isOverdue(task, now)).length,
+          openCount: repTasks.length,
+        };
+      })
+      .sort((a, b) => b.overdueCount - a.overdueCount || a.name.localeCompare(b.name));
   }
 
   async completeTask(context: RequestContext, taskId: string): Promise<TaskView> {

@@ -66,6 +66,18 @@ describe("TaskService", () => {
     await expect(service.listOverdueTasks(await contextFor("u-marcus"), { repId: "u-alicia" })).rejects.toMatchObject({ code: "forbidden" });
   });
 
+  it("summarizes overdue and open work per rep, most overdue first, and is managers-only", async () => {
+    const dana = await contextFor("u-dana");
+    await service.completeTask(dana, "task-1004");
+
+    expect(await service.teamSummary(dana)).toEqual([
+      { id: "u-jordan", name: "Jordan Pike", teamId: "team-north", overdueCount: 1, openCount: 2 },
+      { id: "u-marcus", name: "Marcus Bell", teamId: "team-north", overdueCount: 1, openCount: 2 },
+      { id: "u-alicia", name: "Alicia Chen", teamId: "team-north", overdueCount: 0, openCount: 1 },
+    ]);
+    await expect(service.teamSummary(await contextFor("u-marcus"))).rejects.toMatchObject({ code: "forbidden" });
+  });
+
   it("completes a task and records the completion time", async () => {
     const task = await service.completeTask(await contextFor("u-dana"), "task-1006");
 
